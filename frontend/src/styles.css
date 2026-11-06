@@ -1,0 +1,35 @@
+:root {
+  --page-bg: #f9f9f7;
+  --surface: #fcfcfb;
+  --text-secondary: #52514e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+}
+
+.page-content {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.chart-surface {
+  background: var(--surface);
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 16px;
+  }
+}
