@@ -6,10 +6,29 @@ tương thích (Matching Score) có giải thích; BI Dashboard trực quan hóa
 - **Backend:** FastAPI · SQLModel · PostgreSQL (SQLite khi phát triển) · scikit-learn
 - **Frontend:** React 19 · Vite · Ant Design · Recharts
 - Báo cáo đồ án: [docs/BaoCao.md](docs/BaoCao.md)
+- Kịch bản demo: [docs/KichBanThuyetTrinh.md](docs/KichBanThuyetTrinh.md)
 
-## Cài đặt
+## Chạy bằng Docker (khuyên dùng)
 
-Yêu cầu: Python 3.11+, Node.js 20+.
+Yêu cầu: Docker Desktop. Chạy PostgreSQL, backend và frontend.
+
+```bash
+docker compose up -d --build
+docker compose run --rm seed      # tạo dữ liệu mẫu (XÓA dữ liệu cũ)
+docker compose restart backend    # bắt buộc sau khi seed lại
+```
+
+Giao diện: <http://localhost:5173> · API: <http://localhost:8000/docs>
+
+```bash
+docker compose run --rm test      # chạy pytest
+docker compose run --rm evaluate  # đánh giá mô hình -> docs/ket_qua_danh_gia.md
+docker compose down               # dừng (thêm -v để xóa cả dữ liệu)
+```
+
+## Cài đặt thủ công
+
+Yêu cầu: Python 3.11-3.13 (các phiên bản thư viện đang pin chưa hỗ trợ 3.14 trở lên), Node.js 20+.
 
 ```bash
 # Backend

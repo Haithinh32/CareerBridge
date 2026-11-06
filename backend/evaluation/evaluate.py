@@ -6,6 +6,8 @@ Không cần CSDL. Kết quả in ra màn hình và ghi vào ../docs/ket_qua_dan
 
 import math
 import random
+from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 from ai.cv_parser import parse_cv
@@ -90,6 +92,36 @@ def _average(rows: list[dict[str, float]]) -> dict[str, float]:
     return {key: sum(r[key] for r in rows) / len(rows) for key in rows[0]}
 
 
+def _average_over_tie_orders(
+    rank: Callable[[list[JobFeatures]], list[int]],
+    jobs: list[JobFeatures],
+    relevant: dict[int, int],
+    rng: random.Random,
+) -> dict[str, float]:
+    """Sắp xếp ổn định giữ thứ tự đầu vào khi hòa điểm, nên tin có id nhỏ được lợi một cách ngẫu
+    nhiên. Lấy trung bình trên nhiều thứ tự xáo trộn để kết quả không phụ thuộc vào id."""
+    return _average([
+        _metrics(rank(rng.sample(jobs, len(jobs))), relevant) for _ in range(RANDOM_TRIALS)
+    ])
+
+
+def _rank_by_jaccard(candidate: CandidateFeatures, order: list[JobFeatures]) -> list[int]:
+    skills = {str(s) for s in candidate.skill_ids}
+    return [j.job_id for j in sorted(order, key=lambda j: -jaccard(
+        skills, {str(s) for s in j.required_skill_ids | j.optional_skill_ids},
+    ))]
+
+
+def _rank_by_scores(scores: dict[int, float], order: list[JobFeatures]) -> list[int]:
+    return [j.job_id for j in sorted(order, key=lambda j: -scores[j.job_id])]
+
+
+def _rank_by_weights(
+    candidate: CandidateFeatures, weights: dict[str, float], order: list[JobFeatures]
+) -> list[int]:
+    return [r.job_id for r in rank_jobs_for_candidate(candidate, order, weights=weights)]
+
+
 def evaluate_ranking(dictionary: SkillDictionary) -> dict[str, dict[str, float]]:
     ids = {entry.name: sid for sid, entry in dictionary.entries.items()}
     jobs = [
@@ -125,26 +157,20 @@ def evaluate_ranking(dictionary: SkillDictionary) -> dict[str, dict[str, float]]
             random_rows.append(_metrics(order, relevant))
         methods["Ngẫu nhiên"].append(_average(random_rows))
 
-        by_jaccard = sorted(
-            jobs, key=lambda j: -jaccard(
-                {str(s) for s in candidate.skill_ids},
-                {str(s) for s in j.required_skill_ids | j.optional_skill_ids},
-            ),
-        )
-        methods["Jaccard kỹ năng"].append(_metrics([j.job_id for j in by_jaccard], relevant))
-
         sim = TextSimilarity([candidate.text, *(f"{j.title} {j.text}" for j in jobs)])
-        scores = sim.similarity_to_all(0, list(range(1, len(jobs) + 1)))
-        by_tfidf = [j.job_id for _, j in sorted(zip(scores, jobs, strict=True),
-                                                key=lambda x: -x[0])]
-        methods["TF-IDF văn bản"].append(_metrics(by_tfidf, relevant))
+        scores = dict(zip(
+            (j.job_id for j in jobs),
+            sim.similarity_to_all(0, list(range(1, len(jobs) + 1))),
+            strict=True,
+        ))
 
-        ranked_skill = rank_jobs_for_candidate(candidate, jobs, weights=skill_only)
-        methods["Chỉ đặc trưng kỹ năng"].append(
-            _metrics([r.job_id for r in ranked_skill], relevant)
-        )
-        ranked = rank_jobs_for_candidate(candidate, jobs, weights=DEFAULT_MATCH_WEIGHTS)
-        methods["Hybrid (đề xuất)"].append(_metrics([r.job_id for r in ranked], relevant))
+        for name, rank in (
+            ("Jaccard kỹ năng", partial(_rank_by_jaccard, candidate)),
+            ("TF-IDF văn bản", partial(_rank_by_scores, scores)),
+            ("Chỉ đặc trưng kỹ năng", partial(_rank_by_weights, candidate, skill_only)),
+            ("Hybrid (đề xuất)", partial(_rank_by_weights, candidate, DEFAULT_MATCH_WEIGHTS)),
+        ):
+            methods[name].append(_average_over_tie_orders(rank, jobs, relevant, rng))
     return {name: _average(rows) for name, rows in methods.items()}
 
 
@@ -178,6 +204,8 @@ def write_report(extraction: dict, extraction_rows: list[dict],
     lines += [
         "",
         "## 2. Xếp hạng gợi ý việc làm",
+        "",
+        f"Mỗi phương pháp lấy trung bình trên {RANDOM_TRIALS} thứ tự xáo trộn để phá hòa điểm công bằng.",
         "",
         "| Phương pháp | " + " | ".join(metric_names) + " |",
         "|---|" + "---|" * len(metric_names),

@@ -1,6 +1,7 @@
 """Trích kỹ năng từ văn bản dựa trên từ điển kỹ năng (tên chuẩn + từ đồng nghĩa/viết tắt)."""
 
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 from ai.text_utils import normalize_text
@@ -8,6 +9,14 @@ from ai.text_utils import normalize_text
 # Ký tự được coi là một phần của "từ" khi xác định ranh giới (để 'c++' không khớp trong 'c++11')
 _WORD_CHARS = r"a-z0-9+#"
 MIN_ALIAS_LENGTH = 2
+
+# Cụm từ trông giống alias kỹ năng nhưng mang nghĩa khác, phải loại trước khi bỏ dấu:
+# 'khoa học máy tính' không phải 'học máy'; 'học sau đại học' không phải 'học sâu'.
+_FALSE_FRIENDS_RE = re.compile(r"học máy tính|hoc may tinh|học sau")
+
+
+def _remove_false_friends(text: str) -> str:
+    return _FALSE_FRIENDS_RE.sub(" ", unicodedata.normalize("NFC", text).lower())
 
 
 @dataclass(frozen=True)
@@ -49,7 +58,9 @@ class SkillDictionary:
         return self.entries.get(skill_id) if skill_id is not None else None
 
     def extract(self, text: str | None) -> list[ExtractedSkill]:
-        normalized = normalize_text(text)
+        if not text:
+            return []
+        normalized = normalize_text(_remove_false_friends(text))
         if not normalized:
             return []
         found: dict[int, ExtractedSkill] = {}

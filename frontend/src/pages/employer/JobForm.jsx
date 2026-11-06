@@ -92,9 +92,9 @@ const JobForm = () => {
           </Col>
         </Row>
         <Form.Item name="required_skills" label="Kỹ năng bắt buộc" rules={[{ required: true, message: 'Chọn ít nhất 1 kỹ năng' }]}>
-          <SkillSelect />
+          <SkillSelect mode="multiple" />
         </Form.Item>
-        <Form.Item name="optional_skills" label="Kỹ năng ưu tiên"><SkillSelect /></Form.Item>
+        <Form.Item name="optional_skills" label="Kỹ năng ưu tiên"><SkillSelect mode="multiple" /></Form.Item>
         <Row gutter={12}>
           <Col xs={12} md={6}><Form.Item name="salary_min" label="Lương từ (triệu)"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item></Col>
           <Col xs={12} md={6}><Form.Item name="salary_max" label="Đến (triệu)"><InputNumber min={0} style={{ width: '100%' }} /></Form.Item></Col>

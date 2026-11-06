@@ -1,0 +1,73 @@
+name: careerbridge
+
+x-backend: &backend
+  build: ./backend
+  image: careerbridge-backend
+  environment: &backend-env
+    DATABASE_URL: postgresql+asyncpg://careerbridge:careerbridge@db:5432/careerbridge
+    JWT_SECRET: ${JWT_SECRET:-chi-dung-cho-demo-doi-khi-trien-khai-that}
+    FRONTEND_URL: http://localhost:5173
+    UPLOAD_DIR: /data/uploads
+  volumes:
+    - uploads:/data/uploads
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: careerbridge
+      POSTGRES_PASSWORD: careerbridge
+      POSTGRES_DB: careerbridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U careerbridge"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    <<: *backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+  # Các lệnh chạy một lần: docker compose run --rm <tên>
+  seed: # XÓA dữ liệu cũ rồi tạo dữ liệu mẫu
+    <<: *backend
+    profiles: [tools]
+    command: python -m scripts.seed
+    depends_on:
+      db:
+        condition: service_healthy
+
+  test:
+    <<: *backend
+    profiles: [tools]
+    command: python -m pytest -q
+    environment:
+      <<: *backend-env
+    depends_on: []
+
+  evaluate: # Ghi kết quả ra docs/ket_qua_danh_gia.md
+    <<: *backend
+    profiles: [tools]
+    command: python -m evaluation.evaluate
+    volumes:
+      - ./docs:/docs
+    depends_on: []
+
+volumes:
+  pgdata:
+  uploads:

@@ -99,11 +99,11 @@ const Quarantine = () => {
         <Form form={form} layout="vertical">
           <Form.Item name="title" label="Tiêu đề"><Input /></Form.Item>
           <Form.Item name="description" label="Mô tả"><Input.TextArea rows={6} /></Form.Item>
-          <Form.Item name="required_skills" label="Kỹ năng"><SkillSelect /></Form.Item>
+          <Form.Item name="required_skills" label="Kỹ năng"><SkillSelect mode="multiple" /></Form.Item>
           <Typography.Text strong>Bổ sung từ điển (từ đồng nghĩa mà hệ thống chưa nhận ra)</Typography.Text>
           <Space.Compact style={{ width: '100%', margin: '8px 0 16px' }}>
             <Form.Item name="alias" noStyle><Input placeholder="VD: reactjs" style={{ width: '40%' }} /></Form.Item>
-            <Form.Item name="alias_skill_id" noStyle><SkillSelect mode={undefined} placeholder="thuộc kỹ năng" style={{ width: '60%' }} /></Form.Item>
+            <Form.Item name="alias_skill_id" noStyle><SkillSelect placeholder="thuộc kỹ năng" style={{ width: '60%' }} /></Form.Item>
           </Space.Compact>
           <Form.Item name="note" label="Ghi chú xử lý"><Input maxLength={1000} /></Form.Item>
         </Form>

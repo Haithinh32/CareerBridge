@@ -1,5 +1,5 @@
 from ai.cv_parser import estimate_years_experience, parse_cv, split_sections
-from ai.skill_extractor import SkillDictionary
+from ai.skill_extractor import SkillDictionary, SkillEntry
 
 SAMPLE_CV = """Nguyễn Văn A
 Email: nguyenvana@gmail.com | SĐT: 0912 345 678
@@ -40,6 +40,21 @@ def test_longer_term_wins(dictionary: SkillDictionary) -> None:
 def test_no_false_positive_inside_words(dictionary: SkillDictionary) -> None:
     # 'ml' không được khớp trong 'html', 'js' không khớp trong 'json'
     assert dictionary.extract("Viết HTML và đọc file JSON") == []
+
+
+def test_no_false_positive_from_vietnamese_phrases(dictionary: SkillDictionary) -> None:
+    # Bỏ dấu làm 'khoa học máy tính' chứa 'hoc may', 'học sau đại học' trùng 'hoc sau' (học sâu)
+    deep_learning = SkillDictionary([SkillEntry(1, "Deep Learning", "AI", ("hoc sau",))])
+    assert dictionary.extract("Cử nhân KHOA HỌC MÁY TÍNH, ngành Khoa học máy tính") == []
+    assert dictionary.extract("Khoa hoc may tinh") == []
+    assert deep_learning.extract("Đang học sau đại học") == []
+
+
+def test_real_mentions_survive_false_friend_filter(dictionary: SkillDictionary) -> None:
+    deep_learning = SkillDictionary([SkillEntry(1, "Deep Learning", "AI", ("hoc sau",))])
+    found = dictionary.extract("Ngành Khoa học máy tính, nghiên cứu mô hình học máy")
+    assert [s.name for s in found] == ["Machine Learning"]
+    assert [s.name for s in deep_learning.extract("Nghiên cứu học sâu")] == ["Deep Learning"]
 
 
 def test_special_characters(dictionary: SkillDictionary) -> None:

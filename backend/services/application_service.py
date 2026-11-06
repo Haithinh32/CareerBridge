@@ -167,6 +167,18 @@ async def view_candidate_profile(
         job = await job_service.get_owned_job(db, job_id, user)
         if job.status != JobStatus.OPEN:
             raise ProfileAccessRevokedError("Vị trí đã đóng, không thể xem hồ sơ")
+        # Điều 25: đã từ chối ở vị trí này thì không được lấy lại quyền xem qua nhánh tìm kiếm
+        rejected = (
+            await db.exec(
+                select(Application).where(
+                    Application.job_id == job.id,
+                    Application.candidate_id == candidate_id,
+                    Application.status == ApplicationStatus.REJECTED,
+                )
+            )
+        ).first()
+        if rejected:
+            raise ProfileAccessRevokedError()
         await privacy_service.grant_access(
             db, company_id=company.id, candidate_id=candidate_id, job_id=job.id,
             source=AccessSource.DISCOVERY,

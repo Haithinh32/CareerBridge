@@ -55,7 +55,7 @@ const JobList = () => {
               onChange={(v) => handleFilterChange('work_type', v)} />
           </Col>
           <Col xs={24} md={6}>
-            <SkillSelect mode={undefined} allowClear placeholder="Kỹ năng"
+            <SkillSelect allowClear placeholder="Kỹ năng"
               onChange={(v) => handleFilterChange('skill_id', v)} />
           </Col>
         </Row>

@@ -4,7 +4,7 @@ import { API_ENDPOINTS } from '@/config/api'
 import http from '@/utils/http'
 
 // Chọn kỹ năng từ từ điển; tìm được cả theo từ đồng nghĩa/viết tắt
-const SkillSelect = ({ value, onChange, mode = 'multiple', placeholder = 'Chọn kỹ năng', ...rest }) => {
+const SkillSelect = ({ value, onChange, mode, placeholder = 'Chọn kỹ năng', ...rest }) => {
   const [skills, setSkills] = useState([])
 
   useEffect(() => {

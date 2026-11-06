@@ -130,6 +130,18 @@ async def test_full_flow(client: AsyncClient) -> None:
     grants = (await client.get("/api/quyen-rieng-tu/quyen-truy-cap", headers=candidate)).json()
     assert grants["items"][0]["revoke_reason"] == "candidate_rejected"
 
+    # Bật "cho phép tìm thấy" không được mở lại quyền xem ở chính vị trí đã từ chối
+    res = await client.put("/api/quyen-rieng-tu/dong-y/employer_discovery", headers=candidate,
+                           json={"is_granted": True})
+    assert res.status_code == 200
+    res = await client.patch("/api/ung-vien/cho-phep-tim-kiem", headers=candidate,
+                             json={"is_discoverable": True})
+    assert res.status_code == 200, res.text
+    res = await client.get(f"/api/ho-so-ung-vien/{candidate_id}", headers=employer,
+                           params={"job_id": job["id"]})
+    assert res.status_code == 403
+    assert res.json()["code"] == "PROFILE_ACCESS_REVOKED"
+
     # Phễu chuyển đổi của doanh nghiệp
     funnel = (await client.get("/api/bi/ty-le-chuyen-doi", headers=employer)).json()["items"]
     assert [stage["count"] for stage in funnel] == [1, 1, 0, 0]

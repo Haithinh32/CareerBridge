@@ -78,7 +78,7 @@ const SkillConfirmCard = ({ skills, onSaved }) => {
       )}
       <Table size="small" rowKey="skill_id" dataSource={rows} columns={columns} pagination={false} />
       <div style={{ marginTop: 12 }}>
-        <SkillSelect mode={undefined} value={newSkillId} placeholder="Thêm kỹ năng khác"
+        <SkillSelect value={newSkillId} placeholder="Thêm kỹ năng khác"
           onChange={handleAdd} />
       </div>
     </Card>

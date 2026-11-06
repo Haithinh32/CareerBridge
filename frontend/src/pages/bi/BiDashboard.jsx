@@ -114,7 +114,7 @@ const BiDashboard = () => {
               { title: 'Số tin', dataIndex: 'job_count', align: 'right' },
             ]}>
             <div style={{ marginBottom: 8, maxWidth: 260 }}>
-              <SkillSelect mode={undefined} allowClear placeholder="Lọc theo kỹ năng" value={salarySkillId}
+              <SkillSelect allowClear placeholder="Lọc theo kỹ năng" value={salarySkillId}
                 onChange={setSalarySkillId} size="small" />
             </div>
             <MultiLineChart data={salaryTrend} xKey="month" series={SALARY_SERIES} formatValue={formatMillion} />
